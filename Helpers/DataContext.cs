@@ -9,6 +9,8 @@ public class DataContext : DbContext
 
     public DbSet<User> Users { get; set; }
 
+    public DbSet<InternalTransaction> InternalTransacions { get; set; }
+
     public DataContext(IConfiguration configuration)
     {
         Configuration = configuration;
@@ -35,6 +37,26 @@ public class DataContext : DbContext
             entity.HasOne(e => e.Sponsor)
                 .WithMany(e => e.Referrals)
                 .HasForeignKey(e => e.SponsorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.HasOne(e => e.User)
+                .WithMany(e => e.AllTransactions)
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(e => e.Amount).HasPrecision(38, 8);
+        });
+
+        modelBuilder.Entity<InternalTransaction>(entity =>
+        {
+            entity.HasBaseType<Transaction>();
+
+            entity.HasOne(e => e.FromUser)
+                .WithMany(e => e.InternalTransactions)
+                .HasForeignKey(e => e.FromUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

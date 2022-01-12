@@ -3,6 +3,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using WebApi.Authorization;
+using WebApi.Entities;
 using WebApi.Helpers;
 using WebApi.Models.Users;
 using WebApi.Services;
@@ -14,13 +15,19 @@ public class UsersController : ControllerBase
 {
     private UserService _userService;
     private readonly AppSettings _appSettings;
+    private readonly DataContext _dataContext;
+    private readonly PopulatorService _populatorService;
 
     public UsersController(
         UserService userService,
-        IOptions<AppSettings> appSettings)
+        IOptions<AppSettings> appSettings,
+        DataContext dataContext,
+        PopulatorService populatorService)
     {
         _userService = userService;
         _appSettings = appSettings.Value;
+        _dataContext = dataContext;
+        _populatorService = populatorService;
     }
 
     [AllowAnonymous]
@@ -37,5 +44,13 @@ public class UsersController : ControllerBase
     {
         _userService.Register(model);
         return Ok(new { message = "Registration successful" });
+    }
+
+    [HttpGet("basicinfo")]
+    public BasicInfoResponse GetBasicInfo()
+    {
+        var user = (User)HttpContext.Items["User"];
+
+        return _populatorService.PopulateBasicInfoResponse(user);
     }
 }

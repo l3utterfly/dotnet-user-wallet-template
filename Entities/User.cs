@@ -5,6 +5,8 @@ public class User
     public User()
     {
         Referrals = new HashSet<User>();
+        AllTransactions = new HashSet<Transaction>();
+        InternalTransactions = new HashSet<InternalTransaction>();
     }
 
     public int Id { get; set; }
@@ -18,4 +20,6 @@ public class User
 
     public virtual User Sponsor { get; set; }
     public virtual ICollection<User> Referrals { get; set; }
+    public virtual ICollection<Transaction> AllTransactions { get; set; }
+    public virtual ICollection<InternalTransaction> InternalTransactions { get; set; }
 }
