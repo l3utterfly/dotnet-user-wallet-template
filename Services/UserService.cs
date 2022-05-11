@@ -6,18 +6,28 @@ using WebApi.Entities;
 using WebApi.Helpers;
 using WebApi.Models.Users;
 using System.Net;
+using WebApi.Exceptions;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
 public class UserService
 {
     private DataContext _context;
     private IJwtUtils _jwtUtils;
+    private readonly EmailService _emailService;
+
+    private readonly char[] chars =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();
 
     public UserService(
         DataContext context,
-        IJwtUtils jwtUtils)
+        IJwtUtils jwtUtils,
+        EmailService emailService)
     {
         _context = context;
         _jwtUtils = jwtUtils;
+        _emailService = emailService;
     }
 
     public AuthenticateResponse Authenticate(AuthenticateRequest model)
@@ -50,12 +60,12 @@ public class UserService
 
         int? sponsorId = null;
 
-        if(!string.IsNullOrEmpty(model.Sponsor))
+        if (!string.IsNullOrEmpty(model.Sponsor))
         {
             var sponsor = _context.Users.FirstOrDefault(t => t.Username == model.Sponsor);
             if (sponsor == null)
                 throw new HandledException(HttpStatusCode.BadRequest, $"Sponsor user {model.Sponsor} does not exist.");
-            
+
             sponsorId = sponsor.Id;
         }
 
@@ -76,5 +86,64 @@ public class UserService
         // save user
         _context.Users.Add(user);
         _context.SaveChanges();
+    }
+
+    public async Task TriggerResetPasswordAsync(string email)
+    {
+        var user = _context.Users.FirstOrDefault(t => t.Email == email);
+
+        if (user == null)
+            throw new HandledException(HttpStatusCode.BadRequest, $"No user with email {email} found.");
+
+        // update reset pass
+        var resetpass = GetRandomString(6);
+
+        user.ResetPasswordCode = resetpass;
+
+        await _context.SaveChangesAsync();
+
+        // trigger reset email
+        await _emailService.SendEmail(user.Email, "Please reset your password", $"Your reset code: {resetpass}");
+
+    }
+
+    private string GetRandomString(int length)
+    {
+        byte[] data = new byte[4 * length];
+        using (var crypto = RandomNumberGenerator.Create())
+        {
+            crypto.GetBytes(data);
+        }
+
+        StringBuilder result = new StringBuilder(length);
+        for (int i = 0; i < length; i++)
+        {
+            var rnd = BitConverter.ToUInt32(data, i * 4);
+            var idx = rnd % chars.Length;
+
+            result.Append(chars[idx]);
+        }
+
+        return result.ToString();
+    }
+
+    /// <summary>
+    /// Reset password for user. This will set the user password to <paramref name="newpassword"/>, and regenerate a salt for the user
+    /// </summary>
+    /// <param name="userid"></param>
+    /// <param name="newpassword"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"><paramref name="newpassword"/> is null or whitespace</exception>
+    public User ResetPassword(int userid, string newpassword)
+    {
+        if (string.IsNullOrWhiteSpace(newpassword)) throw new ArgumentNullException(nameof(newpassword), "Input password cannot be empty.");
+
+        var user = _context.Users.First(t => t.Id == userid);
+
+        user.PasswordHash = BCryptNet.HashPassword(newpassword);
+
+        _context.SaveChanges();
+
+        return user;
     }
 }

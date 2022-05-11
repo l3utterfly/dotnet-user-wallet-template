@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebApi.Authorization;
 using WebApi.Helpers;
+using WebApi.Middleware;
 using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,12 +17,23 @@ var builder = WebApplication.CreateBuilder(args);
     services.AddControllers();
 
     // configure strongly typed settings object
-    services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+    // app settings
+    services.Configure<AppSettings>(options =>
+    {
+        // disable null check so we can use reflection to set all appsettings
+        AppSettings.DisableNullCheck = true;
+
+        builder.Configuration.GetSection("AppSettings").Bind(options);
+
+        // restore null check
+        AppSettings.DisableNullCheck = false;
+    });
 
     // configure DI for application services
     services.AddScoped<IJwtUtils, JwtUtils>();
     services.AddScoped<UserService, UserService>();
     services.AddScoped<PopulatorService, PopulatorService>();
+    services.AddScoped<EmailService, EmailService>();
 }
 
 var app = builder.Build();

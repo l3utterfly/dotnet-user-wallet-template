@@ -1,7 +1,8 @@
-namespace WebApi.Helpers;
+namespace WebApi.Middleware;
 
 using System.Net;
 using System.Text.Json;
+using WebApi.Exceptions;
 
 public class ErrorHandlerMiddleware
 {
@@ -23,12 +24,17 @@ public class ErrorHandlerMiddleware
             var response = context.Response;
             response.ContentType = "application/json";
 
-            switch(error)
+            switch (error)
             {
                 case HandledException e:
                     // custom application error
                     response.StatusCode = (int)e.StatusCode;
                     break;
+
+                case ArgumentException:
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    break;
+
                 default:
                     // unhandled error
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
