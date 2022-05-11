@@ -59,5 +59,10 @@ public class DataContext : DbContext
                 .HasForeignKey(e => e.FromUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<ManualTransaction>(entity =>
+        {
+            entity.HasBaseType<Transaction>();
+        });
     }
 }

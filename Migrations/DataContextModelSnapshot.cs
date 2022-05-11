@@ -54,7 +54,7 @@ namespace WebApi.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Transaction");
+                    b.ToTable("Transaction", (string)null);
 
                     b.HasDiscriminator<string>("Discriminator").HasValue("Transaction");
                 });
@@ -102,7 +102,7 @@ namespace WebApi.Migrations
                         .IsUnique()
                         .HasFilter("[SponsorId] IS NOT NULL");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("WebApi.Entities.InternalTransaction", b =>

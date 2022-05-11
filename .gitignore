@@ -45,3 +45,5 @@ obj
 LocalDatabase.db
 
 .vs/
+
+appsettings.Production.json

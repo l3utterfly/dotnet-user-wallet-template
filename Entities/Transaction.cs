@@ -23,4 +23,9 @@
         public int FromUserId { get; set; }
         public virtual User FromUser { get; set; }
     }
+
+    public class ManualTransaction : Transaction
+    {
+    }
+
 }
