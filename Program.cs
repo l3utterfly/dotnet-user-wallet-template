@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 using WebApi.Authorization;
 using WebApi.Helpers;
 using WebApi.Middleware;
@@ -15,6 +17,21 @@ var builder = WebApplication.CreateBuilder(args);
  
     services.AddCors();
     services.AddControllers();
+
+    services.AddEndpointsApiExplorer();
+    services.AddSwaggerGen(options =>
+    {
+        options.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Version = "v1",
+            Title = "Wallet API",
+            Description = "User wallet backoffice",
+        });
+
+        // using System.Reflection;
+        var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+    });
 
     // configure strongly typed settings object
     // app settings
@@ -60,6 +77,13 @@ using (var scope = app.Services.CreateScope())
     app.UseMiddleware<JwtMiddleware>();
 
     app.MapControllers();
+
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+        options.RoutePrefix = string.Empty;
+    });
 }
 
 app.Run("http://localhost:4000");
