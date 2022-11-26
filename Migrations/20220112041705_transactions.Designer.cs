@@ -13,7 +13,7 @@ namespace WebApi.Migrations
 {
     [DbContext(typeof(DataContext))]
     [Migration("20220112041705_transactions")]
-    partial class transactions
+    partial class Transactions
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
